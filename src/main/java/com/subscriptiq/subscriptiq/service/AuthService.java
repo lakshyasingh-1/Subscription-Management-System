@@ -7,6 +7,10 @@ import com.subscriptiq.subscriptiq.entity.User;
 import com.subscriptiq.subscriptiq.enums.Role;
 import com.subscriptiq.subscriptiq.repository.UserRepository;
 
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,13 +19,18 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
 
     public AuthService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       AuthenticationManager authenticationManager) {
+
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
     }
 
+    // Register a new customer
     public String register(RegisterRequest request) {
 
         if (request.getFullName() == null ||
@@ -66,25 +75,43 @@ public class AuthService {
 
         return "Registration successful!";
     }
-    public String login(LoginRequest request) {
 
-        // Find user using email
-        User user = userRepository.findByEmail(
-                request.getEmail().trim().toLowerCase()
-        ).orElseThrow(() ->
-                new IllegalArgumentException("User not found")
-        );
+    // Authenticate user and return authentication details
+    public Authentication login(LoginRequest request) {
 
-        // Check password
-        boolean passwordMatches = passwordEncoder.matches(
-                request.getPassword(),
-                user.getPassword()
-        );
-
-        if (!passwordMatches) {
-            throw new IllegalArgumentException("Invalid password");
+        if (request.getEmail() == null ||
+                request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email is required");
         }
 
-        return "Login successful!";
+        if (request.getPassword() == null ||
+                request.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Password is required");
+        }
+
+        String email = request.getEmail().trim().toLowerCase();
+        User admin = userRepository.findByEmail(email).orElse(null);
+
+        if (admin != null) {
+            System.out.println("User found: " + admin.getEmail());
+            System.out.println("Password matches: " +
+                    passwordEncoder.matches(
+                            request.getPassword(),
+                            admin.getPassword()
+                    ));
+        }
+        try {
+            return authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            email,
+                            request.getPassword()
+                    )
+            );
+
+        } catch (AuthenticationException e) {
+            throw new IllegalArgumentException(
+                    "Invalid email or password"
+            );
+        }
     }
 }
