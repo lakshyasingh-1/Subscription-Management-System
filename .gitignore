@@ -1,0 +1,42 @@
+# Help files
+HELP.md
+
+# Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# STS / Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# Build files
+build/
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
